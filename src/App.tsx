@@ -62,6 +62,12 @@ export default function App() {
   // Celebrating badges overlay modal trigger
   const [celebratingBadge, setCelebratingBadge] = useState<any | null>(null);
 
+  // Toast / alert message state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Active warm-up state to ensure voice synthesizers are ready
+  const [isWarmedUp, setIsWarmedUp] = useState(false);
+
   // Load historical persistent states from local storage on first mount
   useEffect(() => {
     try {
@@ -474,32 +480,108 @@ export default function App() {
   };
 
   const fallbackSpeech = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.85; // slightly slower so 10-12 year kids absorb word structures
-      
-      const voices = window.speechSynthesis.getVoices();
-      const enVoice = voices.find((v) => v.lang.startsWith('en') && v.name.toLowerCase().includes('google')) || 
-                        voices.find((v) => v.lang.startsWith('en'));
-      if (enVoice) utterance.voice = enVoice;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        // 1. Before speaking, call speechSynthesis.cancel()
+        window.speechSynthesis.cancel();
 
-      window.speechSynthesis.speak(utterance);
+        // 2. Create a new SpeechSynthesisUtterance(text)
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        // Set language to "en-US", rate to 0.85, pitch to 1
+        utterance.lang = 'en-US';
+        utterance.rate = 0.85;
+        utterance.pitch = 1;
+
+        // Custom voice resolver with priority on standard high quality English voices
+        const voices = window.speechSynthesis.getVoices();
+        const enVoice = voices.find((v) => v.lang === 'en-US' && v.name.toLowerCase().includes('google')) || 
+                        voices.find((v) => v.lang === 'en-US') ||
+                        voices.find((v) => v.lang.startsWith('en'));
+        if (enVoice) {
+          utterance.voice = enVoice;
+        }
+
+        // 9. Add error handling: If speaking fails, show friendly message
+        utterance.onerror = (event) => {
+          console.error('SpeechSynthesisUtterance error event:', event);
+          if (event.error !== 'interrupted' && event.error !== 'canceled') {
+            setToastMessage("语音播放失败，请点击重试。");
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        console.error('Speech synthesis execution crashed:', err);
+        setToastMessage("语音播放失败，请点击重试。");
+      }
     } else {
-      console.log('Speech synthesis not supported in this frame client');
+      // 4. Add fallback if speechSynthesis is not available
+      console.log('Speech synthesis not supported on this device/browser');
+      setToastMessage("当前浏览器不支持语音朗读，请使用 Chrome 浏览器。");
     }
   };
 
-  // Trigger browser voices loading once at start
+  // 6. Add a hidden warm-up speech after first user tap
+  useEffect(() => {
+    const warmUpSpeech = () => {
+      if (isWarmedUp) return;
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const silentUtterance = new SpeechSynthesisUtterance('');
+          silentUtterance.volume = 0; // silent
+          window.speechSynthesis.speak(silentUtterance);
+          setIsWarmedUp(true);
+        } catch (e) {
+          console.warn('Speech synthesis warm-up failed:', e);
+        }
+      }
+    };
+
+    window.addEventListener('click', warmUpSpeech, { once: true });
+    window.addEventListener('touchstart', warmUpSpeech, { once: true });
+    return () => {
+      window.removeEventListener('click', warmUpSpeech);
+      window.removeEventListener('touchstart', warmUpSpeech);
+    };
+  }, [isWarmedUp]);
+
+  // 5. Add a voice loading fix: Some Android browsers load voices slowly.
+  // Use speechSynthesis.getVoices() and listen to the voiceschanged event.
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
+      const loadVoices = () => {
+        window.speechSynthesis.getVoices();
+      };
+      
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+      };
     }
   }, []);
 
   return (
     <div className="min-h-screen bg-[#f0f9ff] text-slate-800 antialiased font-sans select-none pb-28 md:pb-16 relative overflow-hidden" style={{ minWidth: '320px' }}>
+      
+      {/* Toast Alert Banner */}
+      {toastMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[999] bg-rose-50 text-rose-800 border-3 border-rose-400 rounded-2xl px-5 py-3.5 font-display font-black text-xs md:text-sm shadow-xl flex items-center gap-2.5 max-w-sm w-[92%]">
+          <span className="text-lg shrink-0">⚠️</span>
+          <p className="flex-1 leading-snug">{toastMessage}</p>
+          <button 
+            onClick={() => setToastMessage(null)} 
+            className="w-5 h-5 flex items-center justify-center bg-rose-250 hover:bg-rose-200 rounded-full font-black text-rose-800 transition-colors cursor-pointer text-xs shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       {/* Background celestial visual accents */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-200/40 rounded-full blur-3xl pointer-events-none" />
