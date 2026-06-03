@@ -68,6 +68,40 @@ export default function App() {
   // Active warm-up state to ensure voice synthesizers are ready
   const [isWarmedUp, setIsWarmedUp] = useState(false);
 
+  // State to check if the Gemini API key is missing
+  const [geminiApiKeyMissing, setGeminiApiKeyMissing] = useState(false);
+
+  // Page load check for Gemini API Key existence
+  useEffect(() => {
+    fetch('/api/gemini/status')
+      .then((res) => {
+        if (!res.ok) throw new Error('Status endpoint failed');
+        return res.json();
+      })
+      .then((data) => {
+        // Set local environment variable simulation in the browser
+        if (typeof window !== 'undefined') {
+          (window as any).process = (window as any).process || { env: {} };
+          (window as any).process.env = (window as any).process.env || {};
+          (window as any).process.env.GEMINI_API_KEY = data.exists ? 'Y' : '';
+        }
+        
+        // 1. 页面加载时打印
+        console.log("API Key exists:", !!process.env.GEMINI_API_KEY);
+
+        // 3. 如果 API Key 不存在
+        if (!data.exists) {
+          setGeminiApiKeyMissing(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to query Gemini API status on frontend, using fallback:", err);
+        // Fallback print
+        console.log("API Key exists:", false);
+        setGeminiApiKeyMissing(true);
+      });
+  }, []);
+
   // Load historical persistent states from local storage on first mount
   useEffect(() => {
     try {
@@ -569,6 +603,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f0f9ff] text-slate-800 antialiased font-sans select-none pb-28 md:pb-16 relative overflow-hidden" style={{ minWidth: '320px' }}>
       
+      {/* GEMINI_API_KEY Missing Warning Banner */}
+      {geminiApiKeyMissing && (
+        <div id="gemini-api-key-missing-error" className="fixed top-4 left-1/2 -translate-x-1/2 z-[1001] bg-red-600 text-white font-mono font-bold text-xs md:text-sm px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce border-3 border-white">
+          <span className="text-lg">🛑</span>
+          <span>GEMINI_API_KEY Missing</span>
+        </div>
+      )}
+
       {/* Toast Alert Banner */}
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[999] bg-rose-50 text-rose-800 border-3 border-rose-400 rounded-2xl px-5 py-3.5 font-display font-black text-xs md:text-sm shadow-xl flex items-center gap-2.5 max-w-sm w-[92%]">

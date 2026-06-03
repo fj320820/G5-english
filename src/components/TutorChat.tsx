@@ -230,6 +230,9 @@ export default function TutorChat({ selectedContext, speakText, onBackToMap }: T
               <div className="flex-1">
                 <p className="font-extrabold text-sm">发生了一点小事故</p>
                 <p className="mt-1 opacity-90">{errorText}</p>
+                <p className="mt-2 text-[11px] text-slate-500 font-normal border-t border-red-100 pt-1.5 leading-normal">
+                  💡 提示：如果您是将应用部署到了 Vercel，请务必在 Vercel 控制台的 <strong>Settings ➡️ Environment Variables</strong> 中配置名为 <strong className="text-rose-600 font-black">GEMINI_API_KEY</strong> 的环境变量（填入您的 Gemini-API 密钥），然后点击 Redeploy 重新部署。
+                </p>
               </div>
             </div>
           )}

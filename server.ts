@@ -1,10 +1,12 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
+
+// 1. 页面加载时打印（服务器端在加载/启动时率先执行并记录）
+console.log("API Key exists:", !!process.env.GEMINI_API_KEY);
 
 const app = express();
 const PORT = 3000;
@@ -34,7 +36,7 @@ function getAiClient(): GoogleGenAI {
 }
 
 // 1. Text-to-Speech endpoint using gemini-3.1-flash-tts-preview
-app.post('/api/gemini/speech', async (req, res) => {
+const ttsHandler = async (req: express.Request, res: express.Response) => {
   try {
     const { word } = req.body;
     if (!word) {
@@ -44,6 +46,9 @@ app.post('/api/gemini/speech', async (req, res) => {
     try {
       const ai = getAiClient();
       console.log(`Generating TTS audio for word: "${word}"`);
+      
+      // 2. 调用 Gemini 前打印
+      console.log("Using Gemini API");
       
       const response = await ai.models.generateContent({
         model: 'gemini-3.1-flash-tts-preview',
@@ -65,6 +70,9 @@ app.post('/api/gemini/speech', async (req, res) => {
         throw new Error('TTS content was empty');
       }
     } catch (apiError: any) {
+      // 4. 如果 Gemini 请求失败：输出完整错误
+      console.error(apiError);
+      
       console.log('Gemini TTS: Service fallback note (quota limit or restriction hit). Switching to browser SpeechSynthesis.');
       // Return a distinctive parameter so the client can fall back gracefully to browser SpeechSynthesis
       return res.json({ fallback: true, message: 'Using client-side voice fallback' });
@@ -73,7 +81,10 @@ app.post('/api/gemini/speech', async (req, res) => {
     console.error('TTS Endpoint Error:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
-});
+};
+
+app.post('/api/gemini/speech', ttsHandler);
+app.post('/gemini/speech', ttsHandler);
 
 // 2. Multi-turn Grade-5 English Tutor endpoint
 const tutorHandler = async (req: express.Request, res: express.Response) => {
@@ -117,6 +128,9 @@ const tutorHandler = async (req: express.Request, res: express.Response) => {
         parts: [{ text: m.text }]
       }));
 
+      // 2. 调用 Gemini 前打印
+      console.log("Using Gemini API");
+
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
         contents,
@@ -129,7 +143,8 @@ const tutorHandler = async (req: express.Request, res: express.Response) => {
       const reply = response.text || "I'm sorry, I couldn't understand that. Let's try spelling one of our unit's words!";
       return res.json({ text: reply });
     } catch (apiError: any) {
-      console.error("Tutor API error:", apiError);
+      // 4. 如果 Gemini 请求失败：输出完整错误
+      console.error(apiError);
       return res.status(503).json({ error: 'tutor_api_failed', message: '托比老师暂时连接失败，请稍后再试。' });
     }
   } catch (error: any) {
@@ -140,9 +155,19 @@ const tutorHandler = async (req: express.Request, res: express.Response) => {
 
 app.post('/api/gemini/tutor', tutorHandler);
 app.post('/api/gemini/chat', tutorHandler);
+app.post('/gemini/tutor', tutorHandler);
+app.post('/gemini/chat', tutorHandler);
+
+const statusHandler = (req: express.Request, res: express.Response) => {
+  const exists = !!process.env.GEMINI_API_KEY;
+  res.json({ exists });
+};
+
+app.get('/api/gemini/status', statusHandler);
+app.get('/gemini/status', statusHandler);
 
 // 3. Sentence checker for practiced vocabulary
-app.post('/api/gemini/practice-check', async (req, res) => {
+const practiceCheckHandler = async (req: express.Request, res: express.Response) => {
   try {
     const { word, sentence } = req.body;
     if (!word || !sentence) {
@@ -165,6 +190,10 @@ app.post('/api/gemini/practice-check', async (req, res) => {
 
     try {
       const ai = getAiClient();
+      
+      // 2. 调用 Gemini 前打印
+      console.log("Using Gemini API");
+
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
         contents: prompt,
@@ -175,6 +204,9 @@ app.post('/api/gemini/practice-check', async (req, res) => {
 
       return res.json({ feedback: response.text });
     } catch (apiError: any) {
+      // 4. 如果 Gemini 请求失败：输出完整错误
+      console.error(apiError);
+
       console.warn('Sentence Check: API call fallback triggered (using local spelling/word checking).');
       
       // Local check fallback
@@ -193,11 +225,15 @@ app.post('/api/gemini/practice-check', async (req, res) => {
     console.error('Practice Check Endpoint Error:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
-});
+};
+
+app.post('/api/gemini/practice-check', practiceCheckHandler);
+app.post('/gemini/practice-check', practiceCheckHandler);
 
 // Setup development server middleware or production static files serving
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -216,4 +252,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
