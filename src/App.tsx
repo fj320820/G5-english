@@ -358,6 +358,10 @@ export default function App() {
   const activeModules = Object.keys(filteredModulesAndUnits[selectedContext.semester] || {});
   const activeUnits = filteredModulesAndUnits[selectedContext.semester][selectedContext.module] || [];
 
+  // Get all unique units of the current selected semester in order (across all modules)
+  const allSemesterUnits = Object.values(filteredModulesAndUnits[selectedContext.semester] || {})
+    .reduce<string[]>((acc, units) => [...acc, ...units], []);
+
   // Reset active module and unit when switching semesters
   const handleSemesterChange = (sem: 'First Semester' | 'Second Semester') => {
     const modules = Object.keys(filteredModulesAndUnits[sem] || {});
@@ -556,7 +560,7 @@ export default function App() {
 
             <div className="flex items-center gap-1.5 bg-emerald-100 text-emerald-800 border-2 border-emerald-300 rounded-full px-3 py-1 md:px-4 md:py-1.5 font-display text-[10px] md:text-xs font-black shadow-sm">
               <Zap className="w-3.5 h-3.5 text-emerald-600 fill-emerald-250 animate-pulse" />
-              当前学习单元: {t(selectedContext.unit)}
+              当前单元 / Unit: Unit {allSemesterUnits.indexOf(selectedContext.unit) + 1} {selectedContext.unit}
             </div>
           </div>
         </div>
@@ -617,7 +621,7 @@ export default function App() {
 
                 {/* Module selection */}
                 <div className="md:col-span-4 space-y-1.5">
-                  <label className="text-xs font-display font-black uppercase text-amber-900 tracking-wider">模块选择</label>
+                  <label className="text-xs font-display font-black uppercase text-amber-900 tracking-wider">模块选择 / Select Module</label>
                   <select
                     value={selectedContext.module}
                     onChange={(e) => {
@@ -626,9 +630,9 @@ export default function App() {
                     }}
                     className="w-full px-4 py-3 text-xs md:text-sm border-3 border-amber-400 rounded-2xl bg-white text-slate-800 font-display font-bold outline-hidden focus:border-amber-600 cursor-pointer shadow-sm"
                   >
-                    {activeModules.map((mod) => (
+                    {activeModules.map((mod, index) => (
                       <option key={mod} value={mod}>
-                        🌲 {t(mod)}
+                        🌲 Module {index + 1} {mod}
                       </option>
                     ))}
                   </select>
@@ -636,7 +640,7 @@ export default function App() {
 
                 {/* Unit selection */}
                 <div className="md:col-span-3 space-y-1.5">
-                  <label className="text-xs font-display font-black uppercase text-amber-900 tracking-wider">单元选择</label>
+                  <label className="text-xs font-display font-black uppercase text-amber-900 tracking-wider">单元选择 / Select Unit</label>
                   <select
                     value={selectedContext.unit}
                     onChange={(e) => {
@@ -645,11 +649,14 @@ export default function App() {
                     }}
                     className="w-full px-4 py-3 text-xs md:text-sm border-3 border-amber-400 rounded-2xl bg-white text-slate-800 font-display font-bold outline-hidden focus:border-amber-600 cursor-pointer shadow-sm"
                   >
-                    {activeUnits.map((u) => (
-                      <option key={u} value={u}>
-                        📔 {t(u)}
-                      </option>
-                    ))}
+                    {activeUnits.map((u) => {
+                      const unitNum = allSemesterUnits.indexOf(u) + 1;
+                      return (
+                        <option key={u} value={u}>
+                          📔 Unit {unitNum !== 0 ? unitNum : 1} {u}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -658,7 +665,7 @@ export default function App() {
               <div className="mt-4 p-4 bg-white/90 rounded-2xl border-2 border-amber-300 flex items-center gap-3 shadow-inner">
                 <span className="text-3xl animate-bounce-slow">🐶</span>
                 <p className="text-xs md:text-sm text-amber-950 font-display font-bold leading-normal">
-                  "你好呀！托比正在看我们当前的【<span className="underline font-black text-amber-700">{t(selectedContext.unit)}</span>】地图哦！快选择下方的一个神奇传送门开始开心畅玩吧！"
+                  "你好呀！托比正在看我们当前的【<span className="underline font-black text-amber-700">Unit {allSemesterUnits.indexOf(selectedContext.unit) + 1} {selectedContext.unit}</span>】地图哦！快选择下方的一个神奇传送门开始开心畅玩吧！"
                 </p>
               </div>
             </div>
