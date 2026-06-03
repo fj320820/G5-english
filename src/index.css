@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fredoka", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --animate-bounce-slow: bounce 3s infinite;
+  --animate-pulse-slow: pulse 2.5s infinite;
+}
+
+/* Custom Duolingo-style push buttons global */
+.btn-bubbly {
+  position: relative;
+  transition: all 0.1s ease;
+}
+.btn-bubbly:active {
+  transform: translateY(4px);
+  box-shadow: none !important;
+}
+
+/* Beautiful custom scrollbars for child-friendly panels */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

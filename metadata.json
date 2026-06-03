@@ -1,0 +1,6 @@
+{
+  "name": "Grade 5 English Assistant",
+  "description": "An interactive English learning tutor and practice suite for Grade 5 primary school students based on the official modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
