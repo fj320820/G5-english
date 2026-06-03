@@ -76,7 +76,7 @@ app.post('/api/gemini/speech', async (req, res) => {
 });
 
 // 2. Multi-turn Grade-5 English Tutor endpoint
-app.post('/api/gemini/tutor', async (req, res) => {
+const tutorHandler = async (req: express.Request, res: express.Response) => {
   try {
     const { messages, selectedContext } = req.body;
     if (!messages || !Array.isArray(messages)) {
@@ -107,8 +107,12 @@ app.post('/api/gemini/tutor', async (req, res) => {
     try {
       const ai = getAiClient();
       
+      // Find the first user message, since Gemini multi-turn role history must start with a user message
+      const firstUserIndex = messages.findIndex((m: any) => m.sender === 'user');
+      const chatHistory = firstUserIndex !== -1 ? messages.slice(firstUserIndex) : [];
+
       // Map message history to Gemini contents structure
-      const contents = messages.map((m: any) => ({
+      const contents = chatHistory.map((m: any) => ({
         role: m.sender === 'user' ? 'user' : 'model',
         parts: [{ text: m.text }]
       }));
@@ -125,29 +129,17 @@ app.post('/api/gemini/tutor', async (req, res) => {
       const reply = response.text || "I'm sorry, I couldn't understand that. Let's try spelling one of our unit's words!";
       return res.json({ text: reply });
     } catch (apiError: any) {
-      console.warn('Gemini Tutor: API call fallback triggered (using rule-based tutor responses).');
-      
-      // Fallback response generator if API key is missing, so user can still play
-      const userText = messages[messages.length - 1]?.text.toLowerCase() || '';
-      let replyText = '';
-
-      if (userText.includes('hello') || userText.includes('hi')) {
-        replyText = "Hello there! I am Toby, your Grade 5 English Buddy! ⭐ Let's explore vocabulary or practice making sentences today! What would you like to study? 🚀";
-      } else if (userText.includes('future') || userText.includes('want to be')) {
-        replyText = "Great! We use 'want to be' to explain future jobs. 🏆 E.g., 'I want to be a pilot.' What about you? Try writing down your dream job!";
-      } else if (selectedContext?.word) {
-        replyText = `Fantastic! Let's practice with our active word "${selectedContext.word}". Can you type a simple sentence using "${selectedContext.word}"? Toby is waiting! 🌟`;
-      } else {
-        replyText = "Awesome! Let's choose a learning unit from the sidebar, browse the elegant vocabulary cards, or check the Grammar rules! Toby will support you all the way! 🎉 🎉";
-      }
-
-      return res.json({ text: replyText, mode: 'fallback' });
+      console.error("Tutor API error:", apiError);
+      return res.status(503).json({ error: 'tutor_api_failed', message: '托比老师暂时连接失败，请稍后再试。' });
     }
   } catch (error: any) {
-    console.error('Tutor Endpoint Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    console.error('Tutor Endpoint General Error:', error);
+    res.status(500).json({ error: '托比老师暂时连接失败，请稍后再试。' });
   }
-});
+};
+
+app.post('/api/gemini/tutor', tutorHandler);
+app.post('/api/gemini/chat', tutorHandler);
 
 // 3. Sentence checker for practiced vocabulary
 app.post('/api/gemini/practice-check', async (req, res) => {

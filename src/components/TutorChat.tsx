@@ -55,6 +55,9 @@ export default function TutorChat({ selectedContext, speakText, onBackToMap }: T
     setInputValue('');
     setIsLoading(true);
 
+    // console log for debug: requirement 9
+    console.log("Tutor message sent");
+
     try {
       const response = await fetch('/api/gemini/tutor', {
         method: 'POST',
@@ -66,10 +69,16 @@ export default function TutorChat({ selectedContext, speakText, onBackToMap }: T
       });
 
       if (!response.ok) {
-        throw new Error('Toby had a tiny connection hiccup. Let\'s try again!');
+        // console log for debug: requirement 9
+        console.error("Tutor API error", response.status, response.statusText);
+        throw new Error('托比老师暂时连接失败，请稍后再试。');
       }
 
       const data = await response.json();
+      
+      // console log for debug: requirement 9
+      console.log("Tutor response received");
+
       const tutorReply: ChatMessage = {
         id: `tutor-${Date.now()}`,
         sender: 'tutor',
@@ -79,7 +88,9 @@ export default function TutorChat({ selectedContext, speakText, onBackToMap }: T
 
       setMessages((prev) => [...prev, tutorReply]);
     } catch (err: any) {
-      setErrorText(err.message || 'Connecting to Toby failed. Check if server is ready!');
+      // console log for debug: requirement 9
+      console.error("Tutor API error", err);
+      setErrorText('托比老师暂时连接失败，请稍后再试。');
     } finally {
       setIsLoading(false);
     }
