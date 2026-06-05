@@ -25,7 +25,7 @@ export interface LearningContext {
   word?: string;
 }
 
-export type ActiveTabType = 'vocabulary' | 'grammar' | 'practice' | 'chat' | 'exam';
+export type ActiveTabType = 'vocabulary' | 'grammar' | 'practice' | 'exam' | 'challenge';
 
 export interface QuizQuestion {
   id: string;

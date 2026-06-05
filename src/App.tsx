@@ -26,10 +26,10 @@ import { t } from './utils/translation';
 import VocabExplorer from './components/VocabExplorer';
 import GrammarLab from './components/GrammarLab';
 import PracticeArena from './components/PracticeArena';
-import TutorChat from './components/TutorChat';
 import ExamSuite from './components/ExamSuite';
 import FavoriteWords from './components/FavoriteWords';
 import MistakeBook from './components/MistakeBook';
+import EnglishChallengeMaster from './components/EnglishChallengeMaster';
 
 export default function App() {
   // Master selection context
@@ -352,7 +352,7 @@ export default function App() {
       case 'grammar': tabVoice = "Entering grammar castle"; break;
       case 'practice': tabVoice = "Entering practice arena"; break;
       case 'exam': tabVoice = "Entering review planet"; break;
-      case 'chat': tabVoice = "Let's chat with Toby"; break;
+      case 'challenge': tabVoice = "Entering English challenge master"; break;
       case 'favorites': tabVoice = "Entering word notebook"; break;
       case 'mistakes': tabVoice = "Entering mistakes book"; break;
     }
@@ -1082,26 +1082,26 @@ export default function App() {
 
               </div>
 
-              {/* Landmark 5: Talk Toby row panel - Floating full width */}
-              <div className="bg-slate-900 text-white rounded-3xl border-4 border-slate-700 shadow-[0_8px_0_0_#1e293b] p-6 flex flex-col md:flex-row items-center justify-between gap-5 transform hover:scale-[1.01] transition-all">
+              {/* Landmark 5: English Challenge Master full-width card */}
+              <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl border-4 border-indigo-700 shadow-[0_8px_0_0_#1e1b4b] p-6 flex flex-col md:flex-row items-center justify-between gap-5 transform hover:scale-[1.01] transition-all" id="challenge-master-landmark">
                 <div className="flex items-center gap-4">
-                  <div className="text-4xl animate-bounce">🐕</div>
+                  <div className="text-4xl animate-bounce">🏆</div>
                   <div>
                     <h4 className="font-display font-black text-xl text-amber-400 flex items-center gap-1">
-                      托比老师
+                      挑战达人 / Challenge Master
                     </h4>
-                    <p className="text-xs text-slate-300 font-display font-bold leading-relaxed max-w-lg mt-1">
-                      "你可以让托比讲讲英语笑话、用简单贴心的方式解释语法难点，或是帮您开启一轮趣味听写！"
+                    <p className="text-xs text-slate-300 font-display font-bold leading-relaxed max-w-xl mt-1">
+                      "进入英语超级演练场！挑战随记拼写大对决、词义大消消、语法城堡句式拼接与趣味情景模拟大对话！赢取大量星光荣誉！"
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => {
-                    navigateToTab('chat');
+                    navigateToTab('challenge');
                   }}
-                  className="px-6 py-3.5 bg-amber-400 hover:bg-amber-500 text-amber-950 font-display font-extrabold text-sm rounded-2xl border-b-4 border-amber-600 btn-bubbly shadow-md cursor-pointer shrink-0 w-full md:w-auto text-center"
+                  className="px-6 py-3.5 bg-amber-400 hover:bg-amber-550 text-amber-950 font-display font-black text-sm rounded-2xl border-b-4 border-amber-600 btn-bubbly shadow-md cursor-pointer shrink-0 w-full md:w-auto text-center"
                 >
-                  托比老师 🐕
+                  发起挑战 🌟
                 </button>
               </div>
 
@@ -1147,14 +1147,6 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'chat' && (
-              <TutorChat 
-                selectedContext={selectedContext} 
-                speakText={speakText} 
-                onBackToMap={handleReturnToMap}
-              />
-            )}
-
             {activeTab === 'exam' && (
               <ExamSuite
                 words={VOCABULARY_LIST}
@@ -1163,6 +1155,15 @@ export default function App() {
                 onBackToMap={handleReturnToMap}
                 onAddMistake={handleAddMistake}
                 onCompleteReview={handleCompleteReview}
+              />
+            )}
+
+            {activeTab === 'challenge' && (
+              <EnglishChallengeMaster
+                words={VOCABULARY_LIST}
+                selectedContext={selectedContext}
+                speakText={speakText}
+                onBackToMap={handleReturnToMap}
               />
             )}
 
@@ -1202,7 +1203,6 @@ export default function App() {
           { id: 'grammar', label: '语法城堡', icon: '🏰' },
           { id: 'practice', label: '闯关挑战', icon: '🏆' },
           { id: 'exam', label: '复习星球', icon: '🚀' },
-          { id: 'chat', label: '托比老师', icon: '🤖' },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
           return (
