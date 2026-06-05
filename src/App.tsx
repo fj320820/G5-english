@@ -603,13 +603,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f0f9ff] text-slate-800 antialiased font-sans select-none pb-28 md:pb-16 relative overflow-hidden" style={{ minWidth: '320px' }}>
       
-      {/* GEMINI_API_KEY Missing Warning Banner */}
-      {geminiApiKeyMissing && (
-        <div id="gemini-api-key-missing-error" className="fixed top-4 left-1/2 -translate-x-1/2 z-[1001] bg-red-600 text-white font-mono font-bold text-xs md:text-sm px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce border-3 border-white">
-          <span className="text-lg">🛑</span>
-          <span>GEMINI_API_KEY Missing</span>
-        </div>
-      )}
 
       {/* Toast Alert Banner */}
       {toastMessage && (
